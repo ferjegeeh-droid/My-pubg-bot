@@ -1,13 +1,12 @@
 FROM python:3.9-slim
 
-# تثبيت FFmpeg
+# تثبيت FFmpeg داخل السيرفر
 RUN apt-get update && apt-get install -y ffmpeg && apt-get clean
 
-# إعداد ملفات العمل
 WORKDIR /app
-COPY . /app
+COPY . .
 
-# تثبيت مكتبات بايثون
+# تثبيت المكتبات
 RUN pip install --no-cache-dir -r requirements.txt
 
 # تشغيل البوت
