@@ -8,7 +8,7 @@ app = Flask(__name__)
 
 @app.route('/')
 def index():
-    return "Bot is Running (Coloring + SlowMotion)!"
+    return "Bot is Running (Supporting Documents)!"
 
 def run_flask():
     port = int(os.environ.get("PORT", 8080))
@@ -20,15 +20,30 @@ bot = telebot.TeleBot(API_TOKEN)
 
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
-    bot.reply_to(message, "أهلاً بك! أرسل لي الفيديو وسأقوم بتلوينه وتبطئه (Slow Motion) كما في المقطع المطلوب.")
+    bot.reply_to(message, "أهلاً بك! أرسل لي المقطع (سواء كفيديو أو كملف Document) وسأقوم بتلوينه وتبطئه.")
 
-@bot.message_handler(content_types=['video'])
+# تعديل هنا ليقبل الفيديوهات والملفات
+@bot.message_handler(content_types=['video', 'document'])
 def handle_video(message):
     chat_id = message.chat.id
-    msg = bot.reply_to(message, "⏳ جاري تنفيذ التلوين والتبطئ... انتظر قليلاً.")
+    file_id = None
+    
+    # التحقق هل المرسل فيديو أم ملف
+    if message.content_type == 'video':
+        file_id = message.video.file_id
+    elif message.content_type == 'document':
+        # التحقق من أن الملف المرسل هو فيديو (مثل mp4, mov, mkv)
+        mime_type = message.document.mime_type
+        if mime_type and 'video' in mime_type:
+            file_id = message.document.file_id
+        else:
+            bot.reply_to(message, "❌ عذراً، هذا الملف ليس مقطع فيديو.")
+            return
+
+    msg = bot.reply_to(message, "⏳ جارِ التحميل والمعالجة (تلوين + تبطئ)...")
 
     try:
-        file_info = bot.get_file(message.video.file_id)
+        file_info = bot.get_file(file_id)
         downloaded_file = bot.download_file(file_info.file_path)
         
         input_fn = f"in_{chat_id}.mp4"
@@ -37,32 +52,6 @@ def handle_video(message):
         with open(input_fn, 'wb') as f:
             f.write(downloaded_file)
 
-        # الأمر المدمج:
-        # -itsscale 2: يقوم بتبطئ الفيديو (نفس الذي في صورتك)
-        # eq + unsharp: التلوين والحدة
+        # أمر FFmpeg (التبطئ -itsscale 2 + التلوين القوي والحدة)
         ffmpeg_cmd = [
-            'ffmpeg', '-y', 
-            '-itsscale', '2',  # تبطئ الفيديو للضعف (Slow Motion)
-            '-i', input_fn,
-            '-vf', "eq=saturation=1.9:contrast=1.5:brightness=0.03,unsharp=7:7:1.5:7:7:0.5",
-            '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '28',
-            output_fn
-        ]
-
-        subprocess.run(ffmpeg_cmd, check=True)
-
-        with open(output_fn, 'rb') as video:
-            bot.send_video(chat_id, video, caption="✅ تم التلوين + التبطئ بنجاح!")
-        
-        bot.delete_message(chat_id, msg.message_id)
-
-    except Exception as e:
-        bot.edit_message_text(f"❌ خطأ: {str(e)}", chat_id, msg.message_id)
-    
-    finally:
-        if os.path.exists(input_fn): os.remove(input_fn)
-        if os.path.exists(output_fn): os.remove(output_fn)
-
-if __name__ == "__main__":
-    threading.Thread(target=run_flask, daemon=True).start()
-    bot.infinity_polling()
+            'ffmpeg', '-y',
