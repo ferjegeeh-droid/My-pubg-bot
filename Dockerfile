@@ -1,14 +1,12 @@
 FROM python:3.9-slim
 
-# تثبيت FFmpeg
-RUN apt-get update && apt-get install -y ffmpeg libsm6 libxext6 && apt-get clean
+# تثبيت FFmpeg (ضروري جداً)
+RUN apt-get update && apt-get install -y ffmpeg && apt-get clean
 
-# ضبط مجلد العمل
 WORKDIR /app
 COPY . /app
 
-# تثبيت مكتبات بايثون
 RUN pip install --no-cache-dir -r requirements.txt
 
-# تشغيل البوت
+# تأكد أن اسم الملف هنا يطابق اسم ملف الكود (main.py)
 CMD ["python", "main.py"]
