@@ -14,7 +14,7 @@ def run_flask():
     app.run(host='0.0.0.0', port=8080)
 
 # توكن البوت
-API_TOKEN = 'YOUR_BOT_TOKEN_HERE'
+API_TOKEN = '8752935054:AAGhVRbm-B7DDyzGROYvD5yKB3uCrhIDfJA'
 bot = telebot.TeleBot(API_TOKEN)
 
 @bot.message_handler(content_types=['video'])
