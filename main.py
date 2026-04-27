@@ -49,10 +49,11 @@ def handle_video(message):
             'ffmpeg', '-y', 
             '-itsscale', '2', 
             '-i', input_fn,
-            '-vf', "eq=saturation=1.9:contrast=1.4:brightness=0.02,unsharp=7:7:1.2:7:7:0.5",
+            '-vf', "eq=saturation=1.8:contrast=1.3", # حذفنا فلاتر الحدة لأنها "تقتل" السرعة
             '-c:v', 'libx264', 
-            '-preset', 'ultrafast', 
-            '-crf', '18', 
+            '-preset', 'ultrafast', # أسرع نمط ضغط
+            '-tune', 'zerolatency', # لتقليل التأخير
+            '-crf', '20', 
             '-threads', '0', 
             output_fn
         ]
